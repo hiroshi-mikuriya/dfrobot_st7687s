@@ -13,22 +13,22 @@
 #define ST7687S_SPIEND() SPI.endTransaction()
 #endif
 
-DFRobot_ST7687S::DFRobot_ST7687S(uint8_t m_cs_, uint8_t m_cd_, uint8_t m_wr_,
-                                 uint8_t m_rck_)
-    : m_cs(m_cs_), m_cd(m_cd_), m_wr(m_wr_), m_rck(m_rck_) {
-  ST7687S_SPIBEGIN(4000000);
+DFRobot_ST7687S::DFRobot_ST7687S(uint8_t cs, uint8_t rs, uint8_t wr,
+                                 uint8_t lck)
+    : m_cs(cs), m_rs(rs), m_wr(wr), m_lck(lck) {
+  ST7687S_SPIBEGIN(8000000);
   pinMode(m_cs, OUTPUT);
   digitalWrite(m_cs, HIGH);
-  pinMode(m_cd, OUTPUT);
-  digitalWrite(m_cd, HIGH);
-  pinMode(m_rck, OUTPUT);
-  digitalWrite(m_rck, HIGH);
+  pinMode(m_rs, OUTPUT);
+  digitalWrite(m_rs, HIGH);
+  pinMode(m_lck, OUTPUT);
+  digitalWrite(m_lck, HIGH);
   pinMode(m_wr, OUTPUT);
   digitalWrite(m_wr, HIGH);
 }
 
 void DFRobot_ST7687S::setCursorAddr(int16_t x0, int16_t y0, int16_t x1,
-                                    int16_t y1) {
+                                    int16_t y1) const {
   uint8_t addrBuf[2] = {(uint8_t)x0, (uint8_t)x1};
   writeCmd(0x2a);
   writeDatBytes(addrBuf, 2);
@@ -38,19 +38,41 @@ void DFRobot_ST7687S::setCursorAddr(int16_t x0, int16_t y0, int16_t x1,
   writeDatBytes(addrBuf, 2);
 }
 
-void DFRobot_ST7687S::fillScreen(uint16_t color) {
-  for (int i = 0; i < LCD_WIDTH; ++i) {
-    m_buf[i * 2 + 0] = (uint8_t)(color >> 8);
-    m_buf[i * 2 + 1] = (uint8_t)color;
-  }
-  setCursorAddr(0, 0, LCD_WIDTH, LCD_HEIGHT);
+void DFRobot_ST7687S::fillScreen(uint16_t color) const {
+  beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
+  for (uint16_t i = 0; i < LCD_WIDTH * LCD_HEIGHT; ++i) draw(color);
+  afterDraw();
+}
+
+void DFRobot_ST7687S::beforeDraw(uint16_t x, uint16_t y, uint16_t w,
+                                 uint16_t h) const {
+  setCursorAddr(x, y, w, h);
   writeToRam();
-  for (int y = 0; y < LCD_HEIGHT; ++y) {
-    writeDatBytes(m_buf, sizeof(m_buf));
+#ifdef __ets__
+  ESP.wdtFeed();
+#endif
+  digitalWrite(m_rs, HIGH);
+  digitalWrite(m_cs, LOW);
+}
+
+void DFRobot_ST7687S::draw(uint8_t* p, uint16_t count) const {
+  for (uint16_t i = 0; i < count; ++i) {
+    SPI.transfer(p[i]);
+    digitalWrite(m_lck, HIGH);
+    digitalWrite(m_lck, LOW);
+    digitalWrite(m_wr, LOW);
+    digitalWrite(m_wr, HIGH);
   }
 }
 
-int16_t DFRobot_ST7687S::begin(void) {
+void DFRobot_ST7687S::draw(uint16_t color) const {
+  uint8_t p[2] = {(uint8_t)(color >> 8), (uint8_t)color};
+  draw(p, sizeof(p));
+}
+
+void DFRobot_ST7687S::afterDraw() const { digitalWrite(m_cs, HIGH); }
+
+void DFRobot_ST7687S::begin(void) const {
   delay(120);
 
   writeCmd(0xd7);
@@ -155,63 +177,39 @@ int16_t DFRobot_ST7687S::begin(void) {
   writeDat(0x1E);
 
   writeCmd(0x29);
-  return 0;
 }
 
-void DFRobot_ST7687S::drawPixel(int16_t x, int16_t y, uint16_t color) {
-  uint8_t colorBuf[2] = {(uint8_t)(color >> 8), (uint8_t)color};
-  // if (limitPixel(x, y) < 0) return;
-  setCursorAddr(x, y, x, y);
-  writeToRam();
-  writeDatBytes(colorBuf, 2);
-}
-
-void DFRobot_ST7687S::writeCmd(uint8_t cmd) {
-  digitalWrite(m_cd, LOW);
+void DFRobot_ST7687S::writeCmd(uint8_t cmd) const {
+  digitalWrite(m_rs, LOW);
   digitalWrite(m_cs, LOW);
 
   SPI.transfer(cmd);
-  digitalWrite(m_rck, HIGH);
-  digitalWrite(m_rck, LOW);
+  digitalWrite(m_lck, HIGH);
+  digitalWrite(m_lck, LOW);
 
   digitalWrite(m_wr, LOW);
   digitalWrite(m_wr, HIGH);
   digitalWrite(m_cs, HIGH);
 }
 
-void DFRobot_ST7687S::writeDat(uint8_t dat) {
-  digitalWrite(m_cd, HIGH);
-  digitalWrite(m_cs, LOW);
-
-  SPI.transfer(dat);
-  digitalWrite(m_rck, HIGH);
-  digitalWrite(m_rck, LOW);
-
-  digitalWrite(m_wr, LOW);
-  digitalWrite(m_wr, HIGH);
-  digitalWrite(m_cs, HIGH);
+void DFRobot_ST7687S::writeDat(uint8_t dat) const {
+  writeDatBytes(&dat, sizeof(dat));
 }
 
-void DFRobot_ST7687S::writeDatBytes(uint8_t* pDat, uint16_t count) {
+void DFRobot_ST7687S::writeDatBytes(uint8_t* pDat, uint16_t count) const {
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
-  digitalWrite(m_cd, HIGH);
+  digitalWrite(m_rs, HIGH);
   digitalWrite(m_cs, LOW);
   while (count--) {
     SPI.transfer(*pDat);
-    digitalWrite(m_rck, HIGH);
-    digitalWrite(m_rck, LOW);
+    digitalWrite(m_lck, HIGH);
+    digitalWrite(m_lck, LOW);
 
     digitalWrite(m_wr, LOW);
     digitalWrite(m_wr, HIGH);
     pDat++;
   }
   digitalWrite(m_cs, HIGH);
-}
-
-void DFRobot_ST7687S::writeRepeatPixel(uint16_t color, uint16_t count,
-                                       uint16_t repeatCount) {
-  uint8_t buf[2] = {(uint8_t)(color >> 8), (uint8_t)color};
-  for (uint32_t i = 0; i < repeatCount * count; i++) writeDatBytes(buf, 2);
 }
