@@ -21,7 +21,7 @@ for i in range(1, len(sys.argv)):
     print('// %s' % sys.argv[i])
     print('const image_t image%d[IMG_WIDTH * IMG_HEIGHT] PROGMEM = {' % i)
     rows = []
-    img = cv2.flip(img, 1).transpose(1,0,2)
+    img = img.transpose(1,0,2)
     for x in range(img.shape[1]):
         cols = []
         for y in range(img.shape[0]):
