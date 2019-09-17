@@ -1,14 +1,12 @@
-#include "DFRobot_ST7687S_Latch.h"
+#include "DFRobot_ST7687S.h"
 #include "image.h"
-#include "my_st7687s.h"
 
 const uint8_t pin_cs = 3;
 const uint8_t pin_rs = 5;
 const uint8_t pin_wr = 6;
 const uint8_t pin_lck = 7;
 
-// my_st7687s lcd(pin_cs, pin_rs, pin_wr, pin_lck);
-DFRobot_ST7687S_Latch lcd(pin_cs, pin_rs, pin_wr, pin_lck);
+DFRobot_ST7687S lcd(IMG_WIDTH, IMG_HEIGHT, pin_cs, pin_rs, pin_wr, pin_lck);
 
 void setup(void) {
   Serial.begin(115200);
