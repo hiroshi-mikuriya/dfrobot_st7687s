@@ -3,6 +3,7 @@
 
 #include "DFRobot_ST7687S.h"
 #include <SPI.h>
+#include <stdarg.h>
 
 // CS
 #define DDR_CS DDRD
@@ -62,7 +63,7 @@ void writeCmd(uint8_t cmd) {
   SET_HIGH(PORT_CS, PIN_CS);
 }
 
-void writeDatBytes(uint8_t* pDat, uint16_t count) {
+void writeDat(uint8_t* pDat, uint16_t count) {
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
@@ -80,34 +81,23 @@ void writeDatBytes(uint8_t* pDat, uint16_t count) {
   SET_HIGH(PORT_CS, PIN_CS);
 }
 
-void writeDat(uint8_t dat) { writeDatBytes(&dat, sizeof(dat)); }
-
-void writeToRam() {
-  // RAMWR Memory write
-  writeCmd(0x2c);
+void write(uint8_t cmd, uint8_t n = 0, ...) {
+  uint8_t buf[16] = {0};
+  va_list list;
+  va_start(list, n);
+  for (uint8_t i = 0; i < n; ++i) buf[i] = (uint8_t)va_arg(list, int);
+  va_end(list);
+  writeCmd(cmd);
+  writeDat(buf, n);
 }
 
 void setCursorAddr(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
-  uint8_t xx[2] = {(uint8_t)x0, (uint8_t)x1};
-  writeCmd(0x2a);  // CASET Column address set
-  writeDatBytes(xx, sizeof(xx));
-  uint8_t yy[2] = {(uint8_t)y0, (uint8_t)y1};
-  writeCmd(0x2b);  // RASET Row address set
-  writeDatBytes(yy, sizeof(yy));
+  // CASET Column address set
+  write(0x2a, 2, (uint8_t)x0, (uint8_t)x1);
+  // RASET Row address set
+  write(0x2b, 2, (uint8_t)y0, (uint8_t)y1);
 }
 }  // namespace
-
-DFRobot_ST7687S::DFRobot_ST7687S() {
-  ST7687S_SPIBEGIN(4000000);
-  DDR_CS |= _BV(PIN_CS);
-  DDR_RS |= _BV(PIN_RS);
-  DDR_WR |= _BV(PIN_WR);
-  DDR_LCK |= _BV(PIN_LCK);
-  SET_HIGH(PORT_CS, PIN_CS);
-  SET_HIGH(PORT_RS, PIN_RS);
-  SET_HIGH(PORT_WR, PIN_WR);
-  SET_HIGH(PORT_LCK, PIN_LCK);
-}
 
 void DFRobot_ST7687S::fillScreen(uint16_t color) const {
   beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
@@ -118,7 +108,8 @@ void DFRobot_ST7687S::fillScreen(uint16_t color) const {
 void DFRobot_ST7687S::beforeDraw(uint16_t x, uint16_t y, uint16_t w,
                                  uint16_t h) const {
   setCursorAddr(x, y, w, h);
-  writeToRam();
+  // RAMWR Memory write
+  write(0x2c);
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
@@ -144,142 +135,105 @@ void DFRobot_ST7687S::draw(uint16_t color) const {
 void DFRobot_ST7687S::afterDraw() const { SET_HIGH(PORT_CS, PIN_CS); }
 
 void DFRobot_ST7687S::begin(void) const {
+  ST7687S_SPIBEGIN(4000000);
+  DDR_CS |= _BV(PIN_CS);
+  DDR_RS |= _BV(PIN_RS);
+  DDR_WR |= _BV(PIN_WR);
+  DDR_LCK |= _BV(PIN_LCK);
+  SET_HIGH(PORT_CS, PIN_CS);
+  SET_HIGH(PORT_RS, PIN_RS);
+  SET_HIGH(PORT_WR, PIN_WR);
+  SET_HIGH(PORT_LCK, PIN_LCK);
+
   delay(120);
 
   // AutoLoadSet EEPROM data auto re-load control
-  writeCmd(0xd7);
-  writeDat(0x9f);
+  write(0xD7, 1, 0x9F);
 
   // EEPCIN EEPROM control in
-  writeCmd(0xE0);
-  writeDat(0x00);
+  write(0xE0, 1, 0x00);
   delay(10);
 
   // EEPANFSEL EEPROM function selection
-  writeCmd(0xFA);
-  writeDat(0x01);
+  write(0xFA, 1, 0x01);
   delay(20);
 
   // EEPRD Read from EEPROM
-  writeCmd(0xE3);
+  write(0xE3);
   delay(20);
 
   // EEPCOUT EEPROM control out
-  writeCmd(0xE1);
+  write(0xE1);
 
   // DISPOFF Display off
-  writeCmd(0x28);
+  write(0x28);
 
   // SLPOUT Sleep out & booster on
-  writeCmd(0x11);
+  write(0x11);
   delay(30);
 
   // VopSet Vop setting
-  writeCmd(0xc0);
-  writeDat(0x17);  // ctrL=0x1b 080416 5PCS 0X1E; 8PCS 0X2A
-  writeDat(0x01);
+  // ctrL=1Bh 080416 5PCS 1Eh; 8PCS 2Ah
+  write(0xC0, 2, 0x17, 0x01);
 
   // WRCNTR Write contrast
-  writeCmd(0x25);
-  writeDat(0x1E);
+  write(0x25, 1, 0x1E);
 
   // BiasSel Bias selection
-  writeCmd(0xC3);
-  writeDat(0x03);
+  write(0xC3, 1, 0x03);
 
   // BstBmpXSel Booster setting
-  writeCmd(0xC4);
-  writeDat(0x07);
+  write(0xC4, 1, 0x07);
 
   // ???
-  writeCmd(0xC5);
-  writeDat(0x01);
+  write(0xC5, 1, 0x01);
 
   // VgSorcSel FV3 with Booster x2 control
-  writeCmd(0xCB);
-  writeDat(0x01);
+  write(0xCB, 1, 0x01);
 
   // ComScanDir Com/Seg Scan Direction for Glass layout
-  writeCmd(0xB7);
-  writeDat(0x00);
+  write(0xB7, 1, 0x00);
 
   // ANASET Analog circuit setting
-  writeCmd(0xD0);
-  writeDat(0x1d);
+  write(0xD0, 1, 0x1D);
 
   // NLInvSet N-line control
-  writeCmd(0xB5);
-  writeDat(0x89);
+  write(0xB5, 1, 0x89);
 
   // DispCompStep Display Compensation Step
-  writeCmd(0xBD);
-  writeDat(0x02);
+  write(0xBD, 1, 0x02);
 
   // FRMSEL Frame Freq. in Temp range A,B,C and D
-  writeCmd(0xF0);
-  writeDat(0x07);
-  writeDat(0x0C);
-  writeDat(0x0C);
-  writeDat(0x12);
+  write(0xF0, 4, 0x07, 0x0C, 0x0C, 0x12);
 
   // TEMPSEL
-  writeCmd(0xF4);
-  writeDat(0x33);
-  writeDat(0x33);
-  writeDat(0x33);
-  writeDat(0x00);
-  writeDat(0x33);
-  writeDat(0x66);
-  writeDat(0x66);
-  writeDat(0x66);
+  write(0xF4, 8, 0x33, 0x33, 0x33, 0x00, 0x33, 0x66, 0x66, 0x66);
 
   // INVOFF Display inversion off (normal)
-  writeCmd(0x20);
+  write(0x20);
 
   // CASET Column address set
-  writeCmd(0x2A);
-  writeDat(0x00);
-  writeDat(0x7F);
+  write(0x2A, 2, 0x00, 0x7F);
 
   // RASET Row address set
-  writeCmd(0x2B);
-  writeDat(0x00);
-  writeDat(0x7f);
+  write(0x2B, 2, 0x00, 0x7F);
 
   // COLMOD Interface pixel format
-  writeCmd(0x3A);
-  writeDat(0x05);
+  write(0x3A, 1, 0x05);
 
   // MADCTR Memory data access control
-  writeCmd(0x36);
-  writeDat(0x80);  // 0xc8
+  write(0x36, 1, 0x80);
 
   // DutySet Display Duty setting
-  writeCmd(0xB0);
-  writeDat(0x7F);
+  write(0xB0, 1, 0x7F);
 
   // DISPON Display on
-  writeCmd(0x29);
+  write(0x29);
 
   // FrameSet Set Frame RGB value
-  writeCmd(0xF9);
-  writeDat(0x00);
-  writeDat(0x02);
-  writeDat(0x04);
-  writeDat(0x06);
-  writeDat(0x08);
-  writeDat(0x0a);
-  writeDat(0x0c);
-  writeDat(0x0e);
-  writeDat(0x10);
-  writeDat(0x12);
-  writeDat(0x14);
-  writeDat(0x16);
-  writeDat(0x18);
-  writeDat(0x1A);
-  writeDat(0x1C);
-  writeDat(0x1E);
+  write(0xF9, 16, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12,
+        0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E);
 
   // DISPON Display on
-  writeCmd(0x29);
+  write(0x29);
 }

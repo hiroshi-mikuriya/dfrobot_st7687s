@@ -1,7 +1,7 @@
 #include "DFRobot_ST7687S.h"
 #include "image.h"
 
-DFRobot_ST7687S lcd;
+DFRobot_ST7687S Lcd;
 
 /**
  * @param[in] n image id
@@ -22,11 +22,11 @@ uint16_t getPixel(int n, int x, int y) {
 
 void setup(void) {
   Serial.begin(115200);
-  lcd.begin();
-  lcd.beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
+  Lcd.begin();
+  Lcd.beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
   for (int y = 0; y < LCD_HEIGHT; ++y)
-    for (int x = 0; x < LCD_WIDTH; ++x) lcd.draw(getPixel(0, x, y));
-  lcd.afterDraw();
+    for (int x = 0; x < LCD_WIDTH; ++x) Lcd.draw(getPixel(0, x, y));
+  Lcd.afterDraw();
 }
 
 void loop(void) {}

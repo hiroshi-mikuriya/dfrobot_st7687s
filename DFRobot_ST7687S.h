@@ -3,10 +3,7 @@
 #define LCD_WIDTH 128
 #define LCD_HEIGHT 128
 
-class DFRobot_ST7687S {
- public:
-  DFRobot_ST7687S();
-
+struct DFRobot_ST7687S {
   void begin() const;
 
   void fillScreen(uint16_t color) const;
