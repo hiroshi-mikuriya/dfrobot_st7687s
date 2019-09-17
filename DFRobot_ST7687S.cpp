@@ -1,3 +1,6 @@
+// ST7687S Datasheet
+// https://www.displayfuture.com/Display/datasheet/controller/ST7687S.pdf
+
 #include "DFRobot_ST7687S.h"
 #include <SPI.h>
 
@@ -79,14 +82,17 @@ void writeDatBytes(uint8_t* pDat, uint16_t count) {
 
 void writeDat(uint8_t dat) { writeDatBytes(&dat, sizeof(dat)); }
 
-void writeToRam(void) { writeCmd(0x2c); }
+void writeToRam() {
+  // RAMWR Memory write
+  writeCmd(0x2c);
+}
 
 void setCursorAddr(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
   uint8_t xx[2] = {(uint8_t)x0, (uint8_t)x1};
-  writeCmd(0x2a);
+  writeCmd(0x2a);  // CASET Column address set
   writeDatBytes(xx, sizeof(xx));
   uint8_t yy[2] = {(uint8_t)y0, (uint8_t)y1};
-  writeCmd(0x2b);
+  writeCmd(0x2b);  // RASET Row address set
   writeDatBytes(yy, sizeof(yy));
 }
 }  // namespace
@@ -140,59 +146,83 @@ void DFRobot_ST7687S::afterDraw() const { SET_HIGH(PORT_CS, PIN_CS); }
 void DFRobot_ST7687S::begin(void) const {
   delay(120);
 
+  // AutoLoadSet EEPROM data auto re-load control
   writeCmd(0xd7);
   writeDat(0x9f);
 
+  // EEPCIN EEPROM control in
   writeCmd(0xE0);
   writeDat(0x00);
   delay(10);
 
+  // EEPANFSEL EEPROM function selection
   writeCmd(0xFA);
   writeDat(0x01);
   delay(20);
 
+  // EEPRD Read from EEPROM
   writeCmd(0xE3);
   delay(20);
+
+  // EEPCOUT EEPROM control out
   writeCmd(0xE1);
 
+  // DISPOFF Display off
   writeCmd(0x28);
+
+  // SLPOUT Sleep out & booster on
   writeCmd(0x11);
   delay(30);
+
+  // VopSet Vop setting
   writeCmd(0xc0);
   writeDat(0x17);  // ctrL=0x1b 080416 5PCS 0X1E; 8PCS 0X2A
   writeDat(0x01);
 
+  // WRCNTR Write contrast
   writeCmd(0x25);
   writeDat(0x1E);
+
+  // BiasSel Bias selection
   writeCmd(0xC3);
   writeDat(0x03);
 
+  // BstBmpXSel Booster setting
   writeCmd(0xC4);
   writeDat(0x07);
 
+  // ???
   writeCmd(0xC5);
   writeDat(0x01);
 
+  // VgSorcSel FV3 with Booster x2 control
   writeCmd(0xCB);
   writeDat(0x01);
 
+  // ComScanDir Com/Seg Scan Direction for Glass layout
   writeCmd(0xB7);
   writeDat(0x00);
 
+  // ANASET Analog circuit setting
   writeCmd(0xD0);
   writeDat(0x1d);
+
+  // NLInvSet N-line control
   writeCmd(0xB5);
   writeDat(0x89);
 
+  // DispCompStep Display Compensation Step
   writeCmd(0xBD);
   writeDat(0x02);
 
+  // FRMSEL Frame Freq. in Temp range A,B,C and D
   writeCmd(0xF0);
   writeDat(0x07);
   writeDat(0x0C);
   writeDat(0x0C);
   writeDat(0x12);
 
+  // TEMPSEL
   writeCmd(0xF4);
   writeDat(0x33);
   writeDat(0x33);
@@ -203,26 +233,35 @@ void DFRobot_ST7687S::begin(void) const {
   writeDat(0x66);
   writeDat(0x66);
 
+  // INVOFF Display inversion off (normal)
   writeCmd(0x20);
+
+  // CASET Column address set
   writeCmd(0x2A);
   writeDat(0x00);
   writeDat(0x7F);
 
+  // RASET Row address set
   writeCmd(0x2B);
   writeDat(0x00);
   writeDat(0x7f);
 
+  // COLMOD Interface pixel format
   writeCmd(0x3A);
   writeDat(0x05);
 
+  // MADCTR Memory data access control
   writeCmd(0x36);
   writeDat(0x80);  // 0xc8
 
+  // DutySet Display Duty setting
   writeCmd(0xB0);
   writeDat(0x7F);
 
+  // DISPON Display on
   writeCmd(0x29);
-  ////////
+
+  // FrameSet Set Frame RGB value
   writeCmd(0xF9);
   writeDat(0x00);
   writeDat(0x02);
@@ -241,5 +280,6 @@ void DFRobot_ST7687S::begin(void) const {
   writeDat(0x1C);
   writeDat(0x1E);
 
+  // DISPON Display on
   writeCmd(0x29);
 }
