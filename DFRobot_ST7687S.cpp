@@ -13,16 +13,10 @@
 #define ST7687S_SPIEND() SPI.endTransaction()
 #endif
 
-DFRobot_ST7687S::DFRobot_ST7687S(int16_t width, int16_t height, uint8_t m_cs_,
-                                 uint8_t m_cd_, uint8_t m_wr_, uint8_t m_rck_)
-    : m_cs(m_cs_),
-      m_cd(m_cd_),
-      m_wr(m_wr_),
-      m_rck(m_rck_),
-      m_width(width - 1),
-      m_height(height - 1) {
+DFRobot_ST7687S::DFRobot_ST7687S(uint8_t m_cs_, uint8_t m_cd_, uint8_t m_wr_,
+                                 uint8_t m_rck_)
+    : m_cs(m_cs_), m_cd(m_cd_), m_wr(m_wr_), m_rck(m_rck_) {
   ST7687S_SPIBEGIN(4000000);
-  setCursor(width / 2, height / 2);
   pinMode(m_cs, OUTPUT);
   digitalWrite(m_cs, HIGH);
   pinMode(m_cd, OUTPUT);
@@ -160,24 +154,10 @@ int16_t DFRobot_ST7687S::begin(void) {
 
 void DFRobot_ST7687S::drawPixel(int16_t x, int16_t y, uint16_t color) {
   uint8_t colorBuf[2] = {(uint8_t)(color >> 8), (uint8_t)color};
-  if (limitPixel(x, y) < 0) return;
+  // if (limitPixel(x, y) < 0) return;
   setCursorAddr(x, y, x, y);
   writeToRam();
   writeDatBytes(colorBuf, 2);
-}
-
-int16_t DFRobot_ST7687S::limitPixel(int16_t& x, int16_t& y) {
-  x += m_cursorX;
-  y += m_cursorY;
-  if ((x < 0) || (y > m_height) || (x > m_width) || (y < 0)) {
-    return -1;
-  }
-  return 0;
-}
-
-void DFRobot_ST7687S::setCursor(int16_t x, int16_t y) {
-  m_cursorX = m_width < x ? m_width : x;
-  m_cursorY = m_height < y ? m_height : y;
 }
 
 void DFRobot_ST7687S::writeCmd(uint8_t cmd) {
