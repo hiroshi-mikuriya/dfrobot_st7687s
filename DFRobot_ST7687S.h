@@ -1,5 +1,8 @@
 #include <stdint.h>
 
+#define LCD_WIDTH 128
+#define LCD_HEIGHT 128
+
 class DFRobot_ST7687S {
  public:
   DFRobot_ST7687S(uint8_t pin_cs, uint8_t pin_cd, uint8_t pin_wr,
@@ -14,6 +17,7 @@ class DFRobot_ST7687S {
   const uint8_t m_cd;
   const uint8_t m_wr;
   const uint8_t m_rck;
+  uint8_t m_buf[LCD_WIDTH * 2];
 
   void writeCmd(uint8_t cmd);
   void writeDat(uint8_t dat);

@@ -39,9 +39,15 @@ void DFRobot_ST7687S::setCursorAddr(int16_t x0, int16_t y0, int16_t x1,
 }
 
 void DFRobot_ST7687S::fillScreen(uint16_t color) {
-  setCursorAddr(0, 0, 128, 128);
+  for (int i = 0; i < LCD_WIDTH; ++i) {
+    m_buf[i * 2 + 0] = (uint8_t)(color >> 8);
+    m_buf[i * 2 + 1] = (uint8_t)color;
+  }
+  setCursorAddr(0, 0, LCD_WIDTH, LCD_HEIGHT);
   writeToRam();
-  writeRepeatPixel(color, 128, 128);
+  for (int y = 0; y < LCD_HEIGHT; ++y) {
+    writeDatBytes(m_buf, sizeof(m_buf));
+  }
 }
 
 int16_t DFRobot_ST7687S::begin(void) {
