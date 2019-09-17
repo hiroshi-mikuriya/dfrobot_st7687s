@@ -23,10 +23,14 @@ uint16_t getPixel(int n, int x, int y) {
 void setup(void) {
   Serial.begin(115200);
   Lcd.begin();
-  Lcd.beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
-  for (int y = 0; y < LCD_HEIGHT; ++y)
-    for (int x = 0; x < LCD_WIDTH; ++x) Lcd.draw(getPixel(0, x, y));
-  Lcd.afterDraw();
 }
 
-void loop(void) {}
+void loop(void) {
+  static int n = 0;
+  n = (n + 1) % COUNT_OF_IMAGES;
+  Lcd.beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
+  for (int y = 0; y < LCD_HEIGHT; ++y)
+    for (int x = 0; x < LCD_WIDTH; ++x) Lcd.draw(getPixel(n, x, y));
+  Lcd.afterDraw();
+  delay(2000);
+}

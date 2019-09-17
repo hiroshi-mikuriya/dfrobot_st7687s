@@ -1,8 +1,8 @@
 import cv2
 import sys
 
-width = 128
-height = 128
+width = 96
+height = 96
 image_t = 'uint8_t'
 print('#include <avr/pgmspace.h>')
 print('#ifndef IMG_WIDTH')
