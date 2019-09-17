@@ -4,19 +4,27 @@
 // __GNUC__ 、__GNUC_MINOR__ 、__GNUC_PATCHLEVEL__
 
 #if ((__GNUC__ > 3) && (__GNUC_MINOR__ <= 3))
-#define ST7687S_SPIBEGIN(x) SPI.begin()
+#define ST7687S_SPIBEGIN(x)              \
+  do {                                   \
+    SPI.begin();                         \
+    SPI.setBitOrder(MSBFIRST);           \
+    SPI.setClockDivider(SPI_CLOCK_DIV4); \
+    SPI.setDataMode(SPI_MODE0);          \
+  } while (0)
 #define ST7687S_SPIEND() SPI.end()
 #else
-#define ST7687S_SPIBEGIN(x) \
-  SPI.begin();              \
-  SPI.beginTransaction(SPISettings(x, MSBFIRST, SPI_MODE0))
+#define ST7687S_SPIBEGIN(x)                                    \
+  do {                                                         \
+    SPI.begin();                                               \
+    SPI.beginTransaction(SPISettings(x, MSBFIRST, SPI_MODE0)); \
+  } while (0)
 #define ST7687S_SPIEND() SPI.endTransaction()
 #endif
 
 DFRobot_ST7687S::DFRobot_ST7687S(uint8_t cs, uint8_t rs, uint8_t wr,
                                  uint8_t lck)
     : m_cs(cs), m_rs(rs), m_wr(wr), m_lck(lck) {
-  ST7687S_SPIBEGIN(8000000);
+  ST7687S_SPIBEGIN(4000000);
   pinMode(m_cs, OUTPUT);
   digitalWrite(m_cs, HIGH);
   pinMode(m_rs, OUTPUT);
@@ -29,13 +37,12 @@ DFRobot_ST7687S::DFRobot_ST7687S(uint8_t cs, uint8_t rs, uint8_t wr,
 
 void DFRobot_ST7687S::setCursorAddr(int16_t x0, int16_t y0, int16_t x1,
                                     int16_t y1) const {
-  uint8_t addrBuf[2] = {(uint8_t)x0, (uint8_t)x1};
+  uint8_t xx[2] = {(uint8_t)x0, (uint8_t)x1};
   writeCmd(0x2a);
-  writeDatBytes(addrBuf, 2);
-  addrBuf[0] = (uint8_t)y0;
-  addrBuf[1] = (uint8_t)y1;
+  writeDatBytes(xx, sizeof(xx));
+  uint8_t yy[2] = {(uint8_t)y0, (uint8_t)y1};
   writeCmd(0x2b);
-  writeDatBytes(addrBuf, 2);
+  writeDatBytes(yy, sizeof(yy));
 }
 
 void DFRobot_ST7687S::fillScreen(uint16_t color) const {
