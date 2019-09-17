@@ -4,11 +4,6 @@
 #define LCD_HEIGHT 128
 
 class DFRobot_ST7687S {
-  const uint8_t m_cs;   //< Chip Select
-  const uint8_t m_rs;   //< LCD Internal Registers Select
-  const uint8_t m_wr;   //< LCD Data Input
-  const uint8_t m_lck;  //< LCD Internal Registers Clock Line
-
   void writeCmd(uint8_t cmd) const;
 
   void writeDat(uint8_t dat) const;
@@ -20,13 +15,7 @@ class DFRobot_ST7687S {
   void setCursorAddr(int16_t x0, int16_t y0, int16_t x1, int16_t y1) const;
 
  public:
-  /**
-   * @param[in] cs Chip Select
-   * @param[in] rs LCD Internal Registers Select
-   * @param[in] wr LCD Data Input
-   * @param[in] lck LCD Internal Registers Clock Line
-   */
-  DFRobot_ST7687S(uint8_t cs, uint8_t rs, uint8_t wr, uint8_t lck);
+  DFRobot_ST7687S();
 
   void begin() const;
 

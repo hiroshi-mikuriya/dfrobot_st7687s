@@ -1,7 +1,7 @@
 #include "DFRobot_ST7687S.h"
 #include "image.h"
 
-DFRobot_ST7687S lcd(3, 5, 6, 7);  // CS, RS, WR, LCK
+DFRobot_ST7687S lcd;
 
 /**
  * @param[in] n image id
@@ -26,7 +26,12 @@ void setup(void) {
 }
 
 void loop(void) {
-  lcd.fillScreen(0);
+  static uint16_t colors[] = {0b1111100000000000, 0b1111111111100000,
+                              0b0000011111100000, 0b0000011111111111,
+                              0b0000000000011111, 0b1111100000011111};
+  static int i = 0;
+  i = (i + 1) % (sizeof(colors) / sizeof(*colors));
+  lcd.fillScreen(colors[i]);
   lcd.beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
   for (int y = 0; y < LCD_HEIGHT; ++y)
     for (int x = 0; x < LCD_WIDTH; ++x) lcd.draw(getPixel(0, x, y));

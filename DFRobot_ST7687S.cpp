@@ -1,6 +1,30 @@
 #include "DFRobot_ST7687S.h"
 #include <SPI.h>
 
+// CS
+#define DDR_CS DDRD
+#define PORT_CS PORTD
+#define PIN_CS PD3
+
+// RS
+#define DDR_RS DDRD
+#define PORT_RS PORTD
+#define PIN_RS PD5
+
+// WR
+#define DDR_WR DDRD
+#define PORT_WR PORTD
+#define PIN_WR PD6
+
+// LCK
+#define DDR_LCK DDRD
+#define PORT_LCK PORTD
+#define PIN_LCK PD7
+
+// Macro
+#define SET_HIGH(port, pin) port |= _BV(pin)
+#define SET_LOW(port, pin) port &= ~_BV(pin)
+
 // __GNUC__ 、__GNUC_MINOR__ 、__GNUC_PATCHLEVEL__
 
 #if ((__GNUC__ > 3) && (__GNUC_MINOR__ <= 3))
@@ -21,18 +45,16 @@
 #define ST7687S_SPIEND() SPI.endTransaction()
 #endif
 
-DFRobot_ST7687S::DFRobot_ST7687S(uint8_t cs, uint8_t rs, uint8_t wr,
-                                 uint8_t lck)
-    : m_cs(cs), m_rs(rs), m_wr(wr), m_lck(lck) {
+DFRobot_ST7687S::DFRobot_ST7687S() {
   ST7687S_SPIBEGIN(4000000);
-  pinMode(m_cs, OUTPUT);
-  digitalWrite(m_cs, HIGH);
-  pinMode(m_rs, OUTPUT);
-  digitalWrite(m_rs, HIGH);
-  pinMode(m_lck, OUTPUT);
-  digitalWrite(m_lck, HIGH);
-  pinMode(m_wr, OUTPUT);
-  digitalWrite(m_wr, HIGH);
+  DDR_CS |= _BV(PIN_CS);
+  DDR_RS |= _BV(PIN_RS);
+  DDR_WR |= _BV(PIN_WR);
+  DDR_LCK |= _BV(PIN_LCK);
+  SET_HIGH(PORT_CS, PIN_CS);
+  SET_HIGH(PORT_RS, PIN_RS);
+  SET_HIGH(PORT_WR, PIN_WR);
+  SET_HIGH(PORT_LCK, PIN_LCK);
 }
 
 void DFRobot_ST7687S::setCursorAddr(int16_t x0, int16_t y0, int16_t x1,
@@ -58,17 +80,17 @@ void DFRobot_ST7687S::beforeDraw(uint16_t x, uint16_t y, uint16_t w,
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
-  digitalWrite(m_rs, HIGH);
-  digitalWrite(m_cs, LOW);
+  SET_HIGH(PORT_RS, PIN_RS);
+  SET_LOW(PORT_CS, PIN_CS);
 }
 
 void DFRobot_ST7687S::draw(uint8_t* p, uint16_t count) const {
   for (uint16_t i = 0; i < count; ++i) {
     SPI.transfer(p[i]);
-    digitalWrite(m_lck, HIGH);
-    digitalWrite(m_lck, LOW);
-    digitalWrite(m_wr, LOW);
-    digitalWrite(m_wr, HIGH);
+    SET_HIGH(PORT_LCK, PIN_LCK);
+    SET_LOW(PORT_LCK, PIN_LCK);
+    SET_LOW(PORT_WR, PIN_WR);
+    SET_HIGH(PORT_WR, PIN_WR);
   }
 }
 
@@ -77,7 +99,7 @@ void DFRobot_ST7687S::draw(uint16_t color) const {
   draw(p, sizeof(p));
 }
 
-void DFRobot_ST7687S::afterDraw() const { digitalWrite(m_cs, HIGH); }
+void DFRobot_ST7687S::afterDraw() const { SET_HIGH(PORT_CS, PIN_CS); }
 
 void DFRobot_ST7687S::begin(void) const {
   delay(120);
@@ -187,16 +209,16 @@ void DFRobot_ST7687S::begin(void) const {
 }
 
 void DFRobot_ST7687S::writeCmd(uint8_t cmd) const {
-  digitalWrite(m_rs, LOW);
-  digitalWrite(m_cs, LOW);
+  SET_LOW(PORT_RS, PIN_RS);
+  SET_LOW(PORT_CS, PIN_CS);
 
   SPI.transfer(cmd);
-  digitalWrite(m_lck, HIGH);
-  digitalWrite(m_lck, LOW);
+  SET_HIGH(PORT_LCK, PIN_LCK);
+  SET_LOW(PORT_LCK, PIN_LCK);
 
-  digitalWrite(m_wr, LOW);
-  digitalWrite(m_wr, HIGH);
-  digitalWrite(m_cs, HIGH);
+  SET_LOW(PORT_WR, PIN_WR);
+  SET_HIGH(PORT_WR, PIN_WR);
+  SET_HIGH(PORT_CS, PIN_CS);
 }
 
 void DFRobot_ST7687S::writeDat(uint8_t dat) const {
@@ -207,16 +229,16 @@ void DFRobot_ST7687S::writeDatBytes(uint8_t* pDat, uint16_t count) const {
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
-  digitalWrite(m_rs, HIGH);
-  digitalWrite(m_cs, LOW);
+  SET_HIGH(PORT_RS, PIN_RS);
+  SET_LOW(PORT_CS, PIN_CS);
   while (count--) {
     SPI.transfer(*pDat);
-    digitalWrite(m_lck, HIGH);
-    digitalWrite(m_lck, LOW);
+    SET_HIGH(PORT_LCK, PIN_LCK);
+    SET_LOW(PORT_LCK, PIN_LCK);
 
-    digitalWrite(m_wr, LOW);
-    digitalWrite(m_wr, HIGH);
+    SET_LOW(PORT_WR, PIN_WR);
+    SET_HIGH(PORT_WR, PIN_WR);
     pDat++;
   }
-  digitalWrite(m_cs, HIGH);
+  SET_HIGH(PORT_CS, PIN_CS);
 }
