@@ -4,16 +4,6 @@
 #define LCD_HEIGHT 128
 
 class DFRobot_ST7687S {
-  void writeCmd(uint8_t cmd) const;
-
-  void writeDat(uint8_t dat) const;
-
-  void writeDatBytes(uint8_t* pDat, uint16_t count) const;
-
-  void writeToRam(void) const { writeCmd(0x2c); }
-
-  void setCursorAddr(int16_t x0, int16_t y0, int16_t x1, int16_t y1) const;
-
  public:
   DFRobot_ST7687S();
 
