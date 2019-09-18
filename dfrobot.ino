@@ -3,34 +3,34 @@
 
 DFRobot_ST7687S Lcd;
 
-/**
- * @param[in] n image id
- * @param[in] x 0 <= x < LCD_WIDTH
- * @param[in] y 0 <= y < LCD_HEIGHT
- */
-uint16_t getPixel(int n, int x, int y) {
-  int x0 = x * IMG_WIDTH / LCD_WIDTH;
-  int y0 = y * IMG_HEIGHT / LCD_HEIGHT;
-  const image_t* img = images[n];
-  uint8_t p = pgm_read_byte(img + y0 * IMG_WIDTH + x0);
-  uint16_t color = 0;
-  color |= ((p & 0xC0) | 0x38) << 8;
-  color |= ((p & 0x38) | 0x07) << 5;
-  color |= ((p & 0x07) << 2) | 0x03;
-  return color;
-}
-
 void setup(void) {
   Serial.begin(115200);
   Lcd.begin();
 }
 
+#define RED 0xF800
+#define GREEN 0x07E0
+#define BLUE 0x001F
+
 void loop(void) {
   static int n = 0;
   n = (n + 1) % COUNT_OF_IMAGES;
+  const image_t* img = images[n];
   Lcd.beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
-  for (int y = 0; y < LCD_HEIGHT; ++y)
-    for (int x = 0; x < LCD_WIDTH; ++x) Lcd.draw(getPixel(n, x, y));
+  for (int y = 0; y < LCD_HEIGHT; ++y) {
+    for (int x0 = 0; x0 < WIDTH_COUNT; ++x0) {
+      for (int x1 = 0; x1 < 5; ++x1) {
+        int x = x0 * 5 + x1;
+        if (LCD_WIDTH <= x) break;
+        uint16_t pix = pgm_read_word(img + y * WIDTH_COUNT + x0);
+        uint16_t color = 0;
+        if (pix & (1 << (3 * x1 + 2))) color |= RED;
+        if (pix & (1 << (3 * x1 + 1))) color |= GREEN;
+        if (pix & (1 << (3 * x1 + 0))) color |= BLUE;
+        Lcd.draw(color);
+      }
+    }
+  }
   Lcd.afterDraw();
   delay(2000);
 }

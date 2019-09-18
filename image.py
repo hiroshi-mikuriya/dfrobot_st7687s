@@ -1,15 +1,19 @@
 import cv2
 import sys
 
-width = 96
-height = 96
-image_t = 'uint8_t'
+width = 128
+height = 128
+wcount = int((width + 4) / 5)
+image_t = 'uint16_t'
 print('#include <avr/pgmspace.h>')
 print('#ifndef IMG_WIDTH')
 print('#define IMG_WIDTH', width)
 print('#endif')
 print('#ifndef IMG_HEIGHT')
 print('#define IMG_HEIGHT', height)
+print('#endif')
+print('#ifndef WIDTH_COUNT')
+print('#define WIDTH_COUNT', wcount)
 print('#endif')
 print('typedef %s image_t;' % image_t)
 for i in range(1, len(sys.argv)):
@@ -19,18 +23,22 @@ for i in range(1, len(sys.argv)):
         exit(1)
     img = cv2.resize(img, (height, width))
     print('// %s' % sys.argv[i])
-    print('const image_t image%d[IMG_WIDTH * IMG_HEIGHT] PROGMEM = {' % i)
-    rows = []
+    print('const image_t image%d[WIDTH_COUNT * IMG_HEIGHT] PROGMEM = {' % i)
     img = img.transpose(1,0,2)
-    for x in range(img.shape[1]):
-        cols = []
-        for y in range(img.shape[0]):
-            a = img[y][x]
-            c = (a[2] & 0b11000000) + ((a[1] & 0b11100000) >> 2) + (
-                (a[0] & 0b11100000) >> 5)
-            cols.append('/* %2d-%d */ 0x%02X' % (x, y, c))
-        rows.append('  ' + ', '.join(cols))
-    print(',\n'.join(rows))
+    for y in range(img.shape[0]):
+        print('/* %2d */' % y, end = ' ')
+        for x0 in range(wcount):
+            color = 0
+            for x1 in range(5):
+                x = x0 * 5 + x1
+                if img.shape[1] <= x:
+                    break
+                a = img[y][x]
+                for i in range(3):
+                    if 128 < a[i]:
+                        color |= 1 << (x1 * 3 + i)
+            print('0x%04X' % color, end = ', ')
+        print()
     print('};')
 
 print('#define COUNT_OF_IMAGES', len(sys.argv) - 1)
