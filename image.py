@@ -24,7 +24,7 @@ for i in range(1, len(sys.argv)):
     img = cv2.resize(img, (height, width))
     print('// %s' % sys.argv[i])
     print('const image_t image%d[WIDTH_COUNT * IMG_HEIGHT] PROGMEM = {' % i)
-    img = img.transpose(1,0,2)
+    # img = img.transpose(1,0,2)
     for y in range(img.shape[0]):
         print('/* %2d */' % y, end = ' ')
         for x0 in range(wcount):
