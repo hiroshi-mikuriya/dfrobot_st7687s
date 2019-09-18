@@ -3,18 +3,8 @@ import sys
 
 width = 128
 height = 128
-wcount = int((width + 4) / 5)
-image_t = 'uint16_t'
+image_t = 'uint8_t'
 print('#include <avr/pgmspace.h>')
-print('#ifndef IMG_WIDTH')
-print('#define IMG_WIDTH', width)
-print('#endif')
-print('#ifndef IMG_HEIGHT')
-print('#define IMG_HEIGHT', height)
-print('#endif')
-print('#ifndef WIDTH_COUNT')
-print('#define WIDTH_COUNT', wcount)
-print('#endif')
 print('typedef %s image_t;' % image_t)
 for i in range(1, len(sys.argv)):
     img = cv2.imread(sys.argv[i], cv2.IMREAD_COLOR)
@@ -22,23 +12,26 @@ for i in range(1, len(sys.argv)):
         print('failed to read image', file=sys.stderr)
         exit(1)
     img = cv2.resize(img, (height, width))
-    print('// %s' % sys.argv[i])
-    print('const image_t image%d[WIDTH_COUNT * IMG_HEIGHT] PROGMEM = {' % i)
     # img = img.transpose(1,0,2)
+    dat = []
+    count = 0
+    pre = 0
     for y in range(img.shape[0]):
-        print('/* %2d */' % y, end = ' ')
-        for x0 in range(wcount):
-            color = 0
-            for x1 in range(5):
-                x = x0 * 5 + x1
-                if img.shape[1] <= x:
-                    break
-                a = img[y][x]
-                for i in range(3):
-                    if 128 < a[i]:
-                        color |= 1 << (x1 * 3 + i)
-            print('0x%04X' % color, end = ', ')
-        print()
+        for x in range(img.shape[1]):
+            count += 1
+            a = img[y][x]
+            cur = (a[2] & 0xC0) + ((a[1] & 0xE0) >> 2) + ((a[0] & 0xE0) >> 5)
+            if 0 < x + y and (255 <= count or pre != cur):
+                dat.append(pre)
+                dat.append(count)
+                count = 0
+            pre = cur
+    if 0 < count:
+        dat.append(pre)
+        dat.append(count)
+    print('// %s' % sys.argv[i])
+    print('const image_t image%d[%d] PROGMEM = {' % (i, len(dat)), end='')
+    print(', '.join(map(lambda i: str(i), dat)), end='')
     print('};')
 
 print('#define COUNT_OF_IMAGES', len(sys.argv) - 1)
