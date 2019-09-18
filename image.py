@@ -6,6 +6,7 @@ height = 128
 image_t = 'uint8_t'
 print('#include <avr/pgmspace.h>')
 print('typedef %s image_t;' % image_t)
+sizes = []
 for i in range(1, len(sys.argv)):
     img = cv2.imread(sys.argv[i], cv2.IMREAD_COLOR)
     if img is None:
@@ -33,7 +34,9 @@ for i in range(1, len(sys.argv)):
     print('const image_t image%d[%d] PROGMEM = {' % (i, len(dat)), end='')
     print(', '.join(map(lambda i: str(i), dat)), end='')
     print('};')
+    sizes.append(len(dat))
 
 print('#define COUNT_OF_IMAGES', len(sys.argv) - 1)
 print('const image_t* images[COUNT_OF_IMAGES] = {',
       ', '.join(map(lambda i: 'image%d' % i, range(1, len(sys.argv)))), '};')
+print('const uint16_t image_sizes[COUNT_OF_IMAGES] = {', ', '.join(map(lambda i: str(i), sizes)), '};')
