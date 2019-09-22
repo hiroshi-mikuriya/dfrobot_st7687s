@@ -101,11 +101,11 @@ void DFRobot_ST7687S::fillScreen(uint16_t color) const {
 void DFRobot_ST7687S::beforeDraw(uint8_t x, uint8_t y, uint8_t w,
                                  uint8_t h) const {
   // Column address set
-  write(CASET, 2, (uint8_t)x, (uint8_t)(x + w));
+  write(DF_CASET, 2, (uint8_t)x, (uint8_t)(x + w));
   // Row address set
-  write(RASET, 2, (uint8_t)y, (uint8_t)(y + h));
+  write(DF_RASET, 2, (uint8_t)y, (uint8_t)(y + h));
   // Memory write
-  write(RAMWR);
+  write(DF_RAMWR);
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
@@ -138,65 +138,65 @@ void DFRobot_ST7687S::begin(void) const {
   delay(120);
 
   // EEPROM data auto re-load control
-  write(AutoLoadSet, 1, 0x9F);
+  write(DF_AutoLoadSet, 1, 0x9F);
   // EEPROM control in
-  write(EEPCIN, 1, 0x00);
+  write(DF_EEPCIN, 1, 0x00);
   delay(10);
   // EEPROM function selection
-  write(EEPANFSEL, 1, 0x01);
+  write(DF_EEPANFSEL, 1, 0x01);
   delay(20);
   // Read from EEPROM
-  write(EEPRD);
+  write(DF_EEPRD);
   delay(20);
   // EEPROM control out
-  write(EEPCOUT);
+  write(DF_EEPCOUT);
   // Display off
-  write(DISPOFF);
+  write(DF_DISPOFF);
   // Sleep out & booster on
-  write(SLPOUT);
+  write(DF_SLPOUT);
   delay(30);
   // Vop setting
   // ctrL=1Bh 080416 5PCS 1Eh; 8PCS 2Ah
-  write(VopSet, 2, 0x17, 0x01);
+  write(DF_VopSet, 2, 0x17, 0x01);
   // Write contrast
-  write(WRCNTR, 1, 0x1E);
+  write(DF_WRCNTR, 1, 0x1E);
   // Bias selection
-  write(BiasSel, 1, 0x03);
+  write(DF_BiasSel, 1, 0x03);
   // Booster setting
-  write(BstBmpXSel, 1, 0x07);
+  write(DF_BstBmpXSel, 1, 0x07);
   // ???
   write(0xC5, 1, 0x01);
   // FV3 with Booster x2 control
-  write(VgSorcSel, 1, 0x01);
+  write(DF_VgSorcSel, 1, 0x01);
   // Com/Seg Scan Direction for Glass layout
-  write(ComScanDir, 1, 0x00);
+  write(DF_ComScanDir, 1, 0x00);
   // Analog circuit setting
-  write(ANASET, 1, 0x1D);
+  write(DF_ANASET, 1, 0x1D);
   // N-line control
-  write(NLInvSet, 1, 0x89);
+  write(DF_NLInvSet, 1, 0x89);
   // Display Compensation Step
-  write(DispCompStep, 1, 0x02);
+  write(DF_DispCompStep, 1, 0x02);
   // Frame Freq. in Temp range A,B,C and D
-  write(FRMSEL, 4, 0x07, 0x0C, 0x0C, 0x12);
+  write(DF_FRMSEL, 4, 0x07, 0x0C, 0x0C, 0x12);
   //
-  write(TEMPSEL, 8, 0x33, 0x33, 0x33, 0x00, 0x33, 0x66, 0x66, 0x66);
+  write(DF_TEMPSEL, 8, 0x33, 0x33, 0x33, 0x00, 0x33, 0x66, 0x66, 0x66);
   // Display inversion off (normal)
-  write(INVOFF);
+  write(DF_INVOFF);
   // Column address set
-  write(CASET, 2, 0x00, 0x7F);
+  write(DF_CASET, 2, 0x00, 0x7F);
   // Row address set
-  write(RASET, 2, 0x00, 0x7F);
+  write(DF_RASET, 2, 0x00, 0x7F);
   // Interface pixel format
-  write(COLMOD, 1, 0x05);
+  write(DF_COLMOD, 1, 0x05);
   // Memory data access control
-  write(MADCTR, 1, 0x80);
+  write(DF_MADCTR, 1, 0x80);
   // Display Duty setting
-  write(DutySet, 1, 0x7F);
+  write(DF_DutySet, 1, 0x7F);
   // Display on
-  write(DISPON);
+  write(DF_DISPON);
   // Set Frame RGB value
-  write(FrameSet, 16, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10,
+  write(DF_FrameSet, 16, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10,
         0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E);
   // Display on
-  write(DISPON);
+  write(DF_DISPON);
 }
