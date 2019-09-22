@@ -4,7 +4,7 @@ import sys
 width = 128
 height = 128
 image_t = 'uint8_t'
-print('#include <avr/pgmspace.h>')
+print('#include <pgmspace.h>')
 print('typedef %s image_t;' % image_t)
 sizes = []
 for i in range(1, len(sys.argv)):
