@@ -28,6 +28,7 @@
 #define PIN_LCK PD7
 
 // Macro
+#define OUTPUT_ENABLE(ddr, pin) ddr |= _BV(pin)
 #define SET_HIGH(port, pin) port |= _BV(pin)
 #define SET_LOW(port, pin) port &= ~_BV(pin)
 #define SET(port, pin, lev) \
@@ -125,10 +126,10 @@ void DFRobot_ST7687S::afterDraw() const { SET_HIGH(PORT_CS, PIN_CS); }
 
 void DFRobot_ST7687S::begin(void) const {
   ST7687S_SPIBEGIN(4000000);
-  DDR_CS |= _BV(PIN_CS);
-  DDR_RS |= _BV(PIN_RS);
-  DDR_WR |= _BV(PIN_WR);
-  DDR_LCK |= _BV(PIN_LCK);
+  OUTPUT_ENABLE(DDR_CS, PIN_CS);
+  OUTPUT_ENABLE(DDR_RS, PIN_RS);
+  OUTPUT_ENABLE(DDR_WR, PIN_WR);
+  OUTPUT_ENABLE(DDR_LCK, PIN_LCK);
   SET_HIGH(PORT_CS, PIN_CS);
   SET_HIGH(PORT_RS, PIN_RS);
   SET_HIGH(PORT_WR, PIN_WR);
