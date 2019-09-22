@@ -7,37 +7,37 @@
 #include <stdarg.h>
 #include "DFRobot_ST7687S_Regs.h"
 
+#define GPIO_OUT    *(volatile uint32_t *)0x60000300
+#define PIN_IN_ADDR ((volatile uint32_t *)0x60000318)
+#define GPIO_ENABLE *(volatile uint32_t *)0x6000030C
+#define GPIO_PIN12  *(volatile uint32_t *)0x60000358
+
+
 // CS
 #define DDR_CS DDRD
 #define PORT_CS PORTD
-#define PIN_CS PD3
+#define PIN_CS 3
 
 // RS
 #define DDR_RS DDRD
 #define PORT_RS PORTD
-#define PIN_RS PD5
+#define PIN_RS 5
 
 // WR
 #define DDR_WR DDRD
 #define PORT_WR PORTD
-#define PIN_WR PD6
+#define PIN_WR 6
 
 // LCK
 #define DDR_LCK DDRD
 #define PORT_LCK PORTD
-#define PIN_LCK PD7
+#define PIN_LCK 7
 
 // Macro
-#define OUTPUT_ENABLE(ddr, pin) ddr |= _BV(pin)
-#define SET_HIGH(port, pin) port |= _BV(pin)
-#define SET_LOW(port, pin) port &= ~_BV(pin)
-#define SET(port, pin, lev) \
-  do {                      \
-    if (lev)                \
-      SET_HIGH(port, pin);  \
-    else                    \
-      SET_LOW(port, pin);   \
-  } while (0)
+#define OUTPUT_ENABLE(ddr, pin) pinMode(pin, OUTPUT)
+#define SET_HIGH(port, pin)  GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), 1)
+#define SET_LOW(port, pin)  GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), 0)
+#define SET(port, pin, lev) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), lev)
 
 // __GNUC__ 、__GNUC_MINOR__ 、__GNUC_PATCHLEVEL__
 
