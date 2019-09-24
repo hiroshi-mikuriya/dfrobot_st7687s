@@ -4,7 +4,6 @@
 #include "DFRobot_ST7687S.h"
 #include <Arduino.h>
 #include <SPI.h>
-#include <soc/gpio_struct.h>
 #include <stdarg.h>
 #include "DFRobot_ST7687S_Regs.h"
 
@@ -13,42 +12,9 @@
 #define PIN_WR 4
 #define PIN_LCK 15
 
-// Macro
-#if 0
-#define SET_HIGH(pin) GPIO.out_w1ts = ((uint32_t)1 << pin)
-#define SET_LOW(pin) GPIO.out_w1tc = ((uint32_t)1 << pin)
-#define SET(pin, lev) \
-  do {                \
-    if (lev)          \
-      SET_HIGH(pin);  \
-    else              \
-      SET_LOW(pin);   \
-  } while (0)
-#else
 #define SET_HIGH(pin) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), 1)
 #define SET_LOW(pin) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), 0)
 #define SET(pin, lev) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), lev)
-#endif
-
-// __GNUC__ 、__GNUC_MINOR__ 、__GNUC_PATCHLEVEL__
-
-#if ((__GNUC__ > 3) && (__GNUC_MINOR__ <= 3))
-#define ST7687S_SPIBEGIN(x)               \
-  do {                                    \
-    SPI.begin();                          \
-    SPI.setBitOrder(MSBFIRST);            \
-    SPI.setClockDivider(SPI_CLOCK_DIV16); \
-    SPI.setDataMode(SPI_MODE0);           \
-  } while (0)
-#define ST7687S_SPIEND() SPI.end()
-#else
-#define ST7687S_SPIBEGIN(x)                                    \
-  do {                                                         \
-    SPI.begin();                                               \
-    SPI.beginTransaction(SPISettings(x, MSBFIRST, SPI_MODE0)); \
-  } while (0)
-#define ST7687S_SPIEND() SPI.endTransaction()
-#endif
 
 namespace {
 void transfer(uint8_t const *p, uint16_t count) {
@@ -63,9 +29,6 @@ void transfer(uint8_t const *p, uint16_t count) {
 }
 
 void writeImpl(uint8_t const *p, uint16_t count, int lev) {
-#ifdef __ets__
-  ESP.wdtFeed();
-#endif
   SET(PIN_RS, lev);
   SET_LOW(PIN_CS);
   transfer(p, count);
@@ -97,9 +60,6 @@ void DFRobot_ST7687S::beforeDraw(uint8_t x, uint8_t y, uint8_t w,
   write(DF_RASET, 2, (uint8_t)y, (uint8_t)(y + h));
   // Memory write
   write(DF_RAMWR);
-#ifdef __ets__
-  ESP.wdtFeed();
-#endif
   SET_HIGH(PIN_RS);
   SET_LOW(PIN_CS);
 }
@@ -116,7 +76,8 @@ void DFRobot_ST7687S::draw(uint16_t color) const {
 void DFRobot_ST7687S::afterDraw() const { SET_HIGH(PIN_CS); }
 
 void DFRobot_ST7687S::begin(void) const {
-  ST7687S_SPIBEGIN(8000000);
+  SPI.begin();
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   pinMode(PIN_CS, OUTPUT);
   pinMode(PIN_RS, OUTPUT);
   pinMode(PIN_WR, OUTPUT);
