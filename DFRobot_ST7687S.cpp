@@ -4,50 +4,41 @@
 #include "DFRobot_ST7687S.h"
 #include <Arduino.h>
 #include <SPI.h>
+#include <soc/gpio_struct.h>
 #include <stdarg.h>
 #include "DFRobot_ST7687S_Regs.h"
 
-#define GPIO_OUT *(volatile uint32_t *)0x60000300
-#define PIN_IN_ADDR ((volatile uint32_t *)0x60000318)
-#define GPIO_ENABLE *(volatile uint32_t *)0x6000030C
-#define GPIO_PIN12 *(volatile uint32_t *)0x60000358
-
-// CS
-#define DDR_CS DDRD
-#define PORT_CS PORTD
 #define PIN_CS 0
-
-// RS
-#define DDR_RS DDRD
-#define PORT_RS PORTD
 #define PIN_RS 2
-
-// WR
-#define DDR_WR DDRD
-#define PORT_WR PORTD
 #define PIN_WR 4
-
-// LCK
-#define DDR_LCK DDRD
-#define PORT_LCK PORTD
 #define PIN_LCK 15
 
 // Macro
-#define OUTPUT_ENABLE(ddr, pin) pinMode(pin, OUTPUT)
-#define SET(port, pin, lev) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), lev)
-// #define SET(port, pin, lev) digitalWrite(pin, lev)
-#define SET_HIGH(port, pin) SET(port, pin, 1)
-#define SET_LOW(port, pin) SET(port, pin, 0)
+#if 0
+#define SET_HIGH(pin) GPIO.out_w1ts = ((uint32_t)1 << pin)
+#define SET_LOW(pin) GPIO.out_w1tc = ((uint32_t)1 << pin)
+#define SET(pin, lev) \
+  do {                \
+    if (lev)          \
+      SET_HIGH(pin);  \
+    else              \
+      SET_LOW(pin);   \
+  } while (0)
+#else
+#define SET_HIGH(pin) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), 1)
+#define SET_LOW(pin) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), 0)
+#define SET(pin, lev) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), lev)
+#endif
 
 // __GNUC__ 、__GNUC_MINOR__ 、__GNUC_PATCHLEVEL__
 
 #if ((__GNUC__ > 3) && (__GNUC_MINOR__ <= 3))
-#define ST7687S_SPIBEGIN(x)              \
-  do {                                   \
-    SPI.begin();                         \
-    SPI.setBitOrder(MSBFIRST);           \
-    SPI.setClockDivider(SPI_CLOCK_DIV4); \
-    SPI.setDataMode(SPI_MODE0);          \
+#define ST7687S_SPIBEGIN(x)               \
+  do {                                    \
+    SPI.begin();                          \
+    SPI.setBitOrder(MSBFIRST);            \
+    SPI.setClockDivider(SPI_CLOCK_DIV16); \
+    SPI.setDataMode(SPI_MODE0);           \
   } while (0)
 #define ST7687S_SPIEND() SPI.end()
 #else
@@ -63,10 +54,10 @@ namespace {
 void transfer(uint8_t const *p, uint16_t count) {
   while (count--) {
     SPI.transfer(*p);
-    SET_HIGH(PORT_LCK, PIN_LCK);
-    SET_LOW(PORT_LCK, PIN_LCK);
-    SET_LOW(PORT_WR, PIN_WR);
-    SET_HIGH(PORT_WR, PIN_WR);
+    SET_HIGH(PIN_LCK);
+    SET_LOW(PIN_LCK);
+    SET_LOW(PIN_WR);
+    SET_HIGH(PIN_WR);
     p++;
   }
 }
@@ -75,10 +66,10 @@ void writeImpl(uint8_t const *p, uint16_t count, int lev) {
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
-  SET(PORT_RS, PIN_RS, lev);
-  SET_LOW(PORT_CS, PIN_CS);
+  SET(PIN_RS, lev);
+  SET_LOW(PIN_CS);
   transfer(p, count);
-  SET_HIGH(PORT_CS, PIN_CS);
+  SET_HIGH(PIN_CS);
 }
 
 void write(uint8_t cmd, uint8_t n = 0, ...) {
@@ -109,8 +100,8 @@ void DFRobot_ST7687S::beforeDraw(uint8_t x, uint8_t y, uint8_t w,
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
-  SET_HIGH(PORT_RS, PIN_RS);
-  SET_LOW(PORT_CS, PIN_CS);
+  SET_HIGH(PIN_RS);
+  SET_LOW(PIN_CS);
 }
 
 void DFRobot_ST7687S::draw(uint8_t const *p, uint16_t count) const {
@@ -122,18 +113,18 @@ void DFRobot_ST7687S::draw(uint16_t color) const {
   draw(p, sizeof(p));
 }
 
-void DFRobot_ST7687S::afterDraw() const { SET_HIGH(PORT_CS, PIN_CS); }
+void DFRobot_ST7687S::afterDraw() const { SET_HIGH(PIN_CS); }
 
 void DFRobot_ST7687S::begin(void) const {
-  ST7687S_SPIBEGIN(4000000);
-  OUTPUT_ENABLE(DDR_CS, PIN_CS);
-  OUTPUT_ENABLE(DDR_RS, PIN_RS);
-  OUTPUT_ENABLE(DDR_WR, PIN_WR);
-  OUTPUT_ENABLE(DDR_LCK, PIN_LCK);
-  SET_HIGH(PORT_CS, PIN_CS);
-  SET_HIGH(PORT_RS, PIN_RS);
-  SET_HIGH(PORT_WR, PIN_WR);
-  SET_HIGH(PORT_LCK, PIN_LCK);
+  ST7687S_SPIBEGIN(8000000);
+  pinMode(PIN_CS, OUTPUT);
+  pinMode(PIN_RS, OUTPUT);
+  pinMode(PIN_WR, OUTPUT);
+  pinMode(PIN_LCK, OUTPUT);
+  SET_HIGH(PIN_CS);
+  SET_HIGH(PIN_RS);
+  SET_HIGH(PIN_WR);
+  SET_HIGH(PIN_LCK);
 
   delay(120);
 
