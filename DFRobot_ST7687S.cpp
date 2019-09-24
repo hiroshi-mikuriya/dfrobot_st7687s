@@ -34,8 +34,8 @@
 
 // Macro
 #define OUTPUT_ENABLE(ddr, pin) pinMode(pin, OUTPUT)
-// #define SET(port, pin, lev) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), lev)
-#define SET(port, pin, lev) digitalWrite(pin, lev)
+#define SET(port, pin, lev) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), lev)
+// #define SET(port, pin, lev) digitalWrite(pin, lev)
 #define SET_HIGH(port, pin) SET(port, pin, 1)
 #define SET_LOW(port, pin) SET(port, pin, 0)
 
