@@ -7,37 +7,37 @@
 #include <stdarg.h>
 #include "DFRobot_ST7687S_Regs.h"
 
-#define GPIO_OUT    *(volatile uint32_t *)0x60000300
+#define GPIO_OUT *(volatile uint32_t *)0x60000300
 #define PIN_IN_ADDR ((volatile uint32_t *)0x60000318)
 #define GPIO_ENABLE *(volatile uint32_t *)0x6000030C
-#define GPIO_PIN12  *(volatile uint32_t *)0x60000358
-
+#define GPIO_PIN12 *(volatile uint32_t *)0x60000358
 
 // CS
 #define DDR_CS DDRD
 #define PORT_CS PORTD
-#define PIN_CS 3
+#define PIN_CS 0
 
 // RS
 #define DDR_RS DDRD
 #define PORT_RS PORTD
-#define PIN_RS 5
+#define PIN_RS 2
 
 // WR
 #define DDR_WR DDRD
 #define PORT_WR PORTD
-#define PIN_WR 6
+#define PIN_WR 4
 
 // LCK
 #define DDR_LCK DDRD
 #define PORT_LCK PORTD
-#define PIN_LCK 7
+#define PIN_LCK 15
 
 // Macro
 #define OUTPUT_ENABLE(ddr, pin) pinMode(pin, OUTPUT)
-#define SET_HIGH(port, pin)  GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), 1)
-#define SET_LOW(port, pin)  GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), 0)
-#define SET(port, pin, lev) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), lev)
+// #define SET(port, pin, lev) GPIO_OUTPUT_SET(GPIO_ID_PIN(pin), lev)
+#define SET(port, pin, lev) digitalWrite(pin, lev)
+#define SET_HIGH(port, pin) SET(port, pin, 1)
+#define SET_LOW(port, pin) SET(port, pin, 0)
 
 // __GNUC__ 、__GNUC_MINOR__ 、__GNUC_PATCHLEVEL__
 
@@ -60,7 +60,7 @@
 #endif
 
 namespace {
-void transfer(uint8_t const* p, uint16_t count) {
+void transfer(uint8_t const *p, uint16_t count) {
   while (count--) {
     SPI.transfer(*p);
     SET_HIGH(PORT_LCK, PIN_LCK);
@@ -71,7 +71,7 @@ void transfer(uint8_t const* p, uint16_t count) {
   }
 }
 
-void writeImpl(uint8_t const* p, uint16_t count, int lev) {
+void writeImpl(uint8_t const *p, uint16_t count, int lev) {
 #ifdef __ets__
   ESP.wdtFeed();
 #endif
@@ -113,7 +113,7 @@ void DFRobot_ST7687S::beforeDraw(uint8_t x, uint8_t y, uint8_t w,
   SET_LOW(PORT_CS, PIN_CS);
 }
 
-void DFRobot_ST7687S::draw(uint8_t const* p, uint16_t count) const {
+void DFRobot_ST7687S::draw(uint8_t const *p, uint16_t count) const {
   transfer(p, count);
 }
 
