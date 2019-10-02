@@ -39,26 +39,6 @@
       SET_LOW(port, pin);   \
   } while (0)
 
-// __GNUC__ 、__GNUC_MINOR__ 、__GNUC_PATCHLEVEL__
-
-#if ((__GNUC__ > 3) && (__GNUC_MINOR__ <= 3))
-#define ST7687S_SPIBEGIN(x)              \
-  do {                                   \
-    SPI.begin();                         \
-    SPI.setBitOrder(MSBFIRST);           \
-    SPI.setClockDivider(SPI_CLOCK_DIV4); \
-    SPI.setDataMode(SPI_MODE0);          \
-  } while (0)
-#define ST7687S_SPIEND() SPI.end()
-#else
-#define ST7687S_SPIBEGIN(x)                                    \
-  do {                                                         \
-    SPI.begin();                                               \
-    SPI.beginTransaction(SPISettings(x, MSBFIRST, SPI_MODE0)); \
-  } while (0)
-#define ST7687S_SPIEND() SPI.endTransaction()
-#endif
-
 namespace {
 void transfer(uint8_t const* p, uint16_t count) {
   while (count--) {
@@ -125,7 +105,8 @@ void DFRobot_ST7687S::draw(uint16_t color) const {
 void DFRobot_ST7687S::afterDraw() const { SET_HIGH(PORT_CS, PIN_CS); }
 
 void DFRobot_ST7687S::begin(void) const {
-  ST7687S_SPIBEGIN(4000000);
+  SPI.begin();
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   OUTPUT_ENABLE(DDR_CS, PIN_CS);
   OUTPUT_ENABLE(DDR_RS, PIN_RS);
   OUTPUT_ENABLE(DDR_WR, PIN_WR);
