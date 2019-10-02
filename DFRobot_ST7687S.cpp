@@ -31,13 +31,6 @@
 #define OUTPUT_ENABLE(ddr, pin) ddr |= _BV(pin)
 #define SET_HIGH(port, pin) port |= _BV(pin)
 #define SET_LOW(port, pin) port &= ~_BV(pin)
-#define SET(port, pin, lev) \
-  do {                      \
-    if (lev)                \
-      SET_HIGH(port, pin);  \
-    else                    \
-      SET_LOW(port, pin);   \
-  } while (0)
 
 namespace {
 void transfer(uint8_t const* p, uint16_t count) {
@@ -52,10 +45,10 @@ void transfer(uint8_t const* p, uint16_t count) {
 }
 
 void writeImpl(uint8_t const* p, uint16_t count, int lev) {
-#ifdef __ets__
-  ESP.wdtFeed();
-#endif
-  SET(PORT_RS, PIN_RS, lev);
+  if (lev)
+    SET_HIGH(PORT_RS, PIN_RS);
+  else
+    SET_LOW(PORT_RS, PIN_RS);
   SET_LOW(PORT_CS, PIN_CS);
   transfer(p, count);
   SET_HIGH(PORT_CS, PIN_CS);
@@ -86,9 +79,6 @@ void DFRobot_ST7687S::beforeDraw(uint8_t x, uint8_t y, uint8_t w,
   write(DF_RASET, 2, (uint8_t)y, (uint8_t)(y + h));
   // Memory write
   write(DF_RAMWR);
-#ifdef __ets__
-  ESP.wdtFeed();
-#endif
   SET_HIGH(PORT_RS, PIN_RS);
   SET_LOW(PORT_CS, PIN_CS);
 }
