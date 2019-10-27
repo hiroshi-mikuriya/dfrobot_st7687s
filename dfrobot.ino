@@ -10,7 +10,6 @@ void setup(void) {
 
 void loop(void) {
   static int n = 0;
-  n = (n + 1) % COUNT_OF_IMAGES;
   const image_t* img = images[n];
   uint16_t size = image_sizes[n];
   Lcd.beforeDraw(0, 0, LCD_WIDTH, LCD_HEIGHT);
@@ -25,4 +24,5 @@ void loop(void) {
   }
   Lcd.afterDraw();
   delay(2000);
+  n = (n + 1) % COUNT_OF_IMAGES;
 }
